@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets"
         xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://github.com/your-username/household-dashboard"
+        id="http://github.com/QuekTianYi/household-dashboard"
         version="1.0.0">
 
   <tizen:application id="household.dashboard"

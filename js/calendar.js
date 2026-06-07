@@ -15,7 +15,7 @@ const Calendar = (() => {
 
   // Total rendered height for a full 24-hour day (px).
   // All positions are calculated as fractions of this.
-  const DAY_HEIGHT_PX = 2400; // 100px per hour
+  const DAY_HEIGHT_PX = 980; // 100px per hour
 
   // Height of the sticky day header (px) — must match CSS
   const HEADER_HEIGHT_PX = 64;
@@ -49,6 +49,7 @@ const Calendar = (() => {
       label.className = 'time-label';
       label.textContent = Utils.hourLabel(hour);
       label.style.top = `${HEADER_HEIGHT_PX + ALL_DAY_HEIGHT_PX + _hourToPx(hour, timeView, bandStartHour)}px`;
+      console.log(HEADER_HEIGHT_PX, ALL_DAY_HEIGHT_PX, _hourToPx(hour, timeView, bandStartHour));
       gutter.appendChild(label);
     });
   };
