@@ -47,3 +47,7 @@ coverage/
 Thumbs.db
 ehthumbs.db
 Log.txt
+
+# Config files
+config.js
+config.ts
