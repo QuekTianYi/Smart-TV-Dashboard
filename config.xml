@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://github.com/your-username/household-dashboard"
+        version="1.0.0">
+
+  <tizen:application id="household.dashboard"
+                     package="household"
+                     required_version="4.0"/>
+
+  <content src="index.html"/>
+
+  <name>Household Dashboard</name>
+  <description>A shared household calendar dashboard for Samsung Frame TV</description>
+
+  <!-- Allow fetching iCal URLs from external sources -->
+  <access origin="*" subdomains="true"/>
+
+  <tizen:privilege name="http://tizen.org/privilege/internet"/>
+  <tizen:privilege name="http://tizen.org/privilege/display"/>
+
+  <!-- TV profile -->
+  <tizen:profile name="tv"/>
+
+  <icon src="icon.png"/>
+
+  <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+
+</widget>

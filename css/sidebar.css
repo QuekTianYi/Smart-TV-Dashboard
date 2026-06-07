@@ -1,0 +1,122 @@
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100%;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app.sidebar-right .sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+.sidebar-header {
+  padding: 20px 16px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Person List ────────────────────────────────────────────────────────── */
+.person-list {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+
+.person-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background var(--transition);
+  user-select: none;
+}
+
+.person-item:hover,
+.person-item:focus {
+  background: var(--bg-elevated);
+  outline: none;
+}
+
+/* Colour dot */
+.person-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: opacity var(--transition), transform var(--transition);
+}
+
+/* Name */
+.person-name {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+  transition: opacity var(--transition);
+}
+
+/* Custom checkbox */
+.person-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.person-check svg {
+  width: 10px;
+  height: 10px;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+/* Ticked state */
+.person-item.active .person-check {
+  border-color: var(--person-colour);
+  background: var(--person-colour);
+}
+
+.person-item.active .person-check svg {
+  opacity: 1;
+}
+
+/* Unticked — dim everything */
+.person-item:not(.active) .person-dot {
+  opacity: 0.3;
+}
+
+.person-item:not(.active) .person-name {
+  opacity: 0.4;
+}
+
+/* ── Sidebar Footer ─────────────────────────────────────────────────────── */
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.last-updated {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}

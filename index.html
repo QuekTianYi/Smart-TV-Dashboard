@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Household Dashboard</title>
+
+  <!-- ical.js — parses .ics files from both Google and Apple Calendar -->
+  <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <link rel="stylesheet" href="css/sidebar.css"/>
+  <link rel="stylesheet" href="css/calendar.css"/>
+  <link rel="stylesheet" href="css/toolbar.css"/>
+</head>
+<body>
+
+  <div id="app" class="app">
+
+    <!-- Sidebar — position (left/right) is set dynamically by JS from config -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">People</span>
+      </div>
+      <ul id="person-list" class="person-list">
+        <!-- Populated by sidebar.js -->
+      </ul>
+      <div class="sidebar-footer">
+        <div id="last-updated" class="last-updated">—</div>
+      </div>
+    </aside>
+
+    <!-- Main content area -->
+    <main id="main" class="main">
+
+      <!-- Toolbar: view toggles -->
+      <header id="toolbar" class="toolbar">
+        <div class="toolbar-group">
+          <button class="toolbar-btn active" data-action="view-3day">3 Day</button>
+          <button class="toolbar-btn" data-action="view-7day">7 Day</button>
+        </div>
+        <div class="toolbar-center" id="toolbar-label">
+          <!-- Date range label, e.g. "Mon 2 – Sun 8 Jun" -->
+        </div>
+        <div class="toolbar-group">
+          <button class="toolbar-btn" data-action="time-5hour">5 Hr</button>
+          <button class="toolbar-btn active" data-action="time-24hour">24 Hr</button>
+          <button class="toolbar-btn nav-btn" data-action="prev">&#8592;</button>
+          <button class="toolbar-btn nav-btn" data-action="today">Today</button>
+          <button class="toolbar-btn nav-btn" data-action="next">&#8594;</button>
+        </div>
+      </header>
+
+      <!-- Calendar grid -->
+      <div id="calendar-container" class="calendar-container">
+        <div id="time-gutter" class="time-gutter">
+          <!-- Time labels — populated by calendar.js -->
+        </div>
+        <div id="calendar-grid" class="calendar-grid">
+          <!-- Day columns — populated by calendar.js -->
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts — order matters -->
+  <script src="config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/ical-fetcher.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/toolbar.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
