@@ -36,9 +36,12 @@ Displays up to 4 people's schedules side-by-side, pulling from **Google Calendar
 2. Click the share icon (📡) next to a calendar → enable *Public Calendar*
 3. Copy the URL and replace `webcal://` with `https://`
 
-### 2. Edit config.js
+### 2. Create and edit config.js
 
-Open `config.js` and fill in your details:
+If it is a new setup: copy `sample-config.js` and rename to `config.js`
+If not: open `config.js` 
+
+Fill in your details:
 
 ```js
 const CONFIG = {
