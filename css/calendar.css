@@ -32,14 +32,9 @@
 .calendar-grid {
   flex: 1;
   display: flex;
-  overflow-x: hidden;
-  overflow-y: scroll;
-  scroll-behavior: smooth;
+  overflow: hidden;
   position: relative;
 }
-
-/* Hide scrollbar visually but keep functionality */
-.calendar-grid::-webkit-scrollbar { width: 0; }
 
 /* ── Day Column ─────────────────────────────────────────────────────────── */
 .day-column {
@@ -110,34 +105,20 @@
   border-color: rgba(255,255,255,0.09);
 }
 
-/* ── Current Time Indicator ─────────────────────────────────────────────── */
+/* ── Current Time Indicator — spans full grid width ─────────────────────── */
 .now-line {
   position: absolute;
   left: 0;
   right: 0;
   height: 2px;
   background: var(--accent);
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
-}
-
-.now-line::before {
-  content: '';
-  position: absolute;
-  left: -4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
 }
 
 /* ── Events Area ────────────────────────────────────────────────────────── */
 .events-area {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  /* top is offset by day-header height in JS */
+  overflow: hidden;
 }
 
 /* ── Person Sub-column ──────────────────────────────────────────────────── */
@@ -153,7 +134,7 @@
   position: absolute;
   border-radius: var(--radius-sm);
   padding: 4px 7px;
-  /* overflow: hidden; */
+  overflow: hidden;
   cursor: default;
   transition: filter var(--transition), transform var(--transition);
   border-left: 3px solid var(--event-colour);
@@ -204,4 +185,30 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+/* ── All Day gutter label ───────────────────────────────────────────────── */
+.all-day-label {
+  position: absolute;
+  right: 8px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* ── Current time label in gutter ──────────────────────────────────────── */
+.now-time-label {
+  position: absolute;
+  right: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  z-index: 5;
+  letter-spacing: 0.02em;
 }
