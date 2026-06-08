@@ -125,7 +125,7 @@ const State = (() => {
   /** Shift the 5-hour band up or down by one hour */
   const shiftBand = (direction) => {
     const delta = direction === 'up' ? -1 : 1;
-    set({ bandStartHour: Utils.clamp(_state.bandStartHour + delta, 0, 19) });
+    set({ bandStartHour: Utils.clamp(_state.bandStartHour + delta, 0, 23) });
   };
 
   return { get, set, onChange, togglePerson, getVisibleRange, navigate, goToToday, shiftBand };

@@ -15,7 +15,7 @@ const Calendar = (() => {
 
   // Total rendered height for a full 24-hour day (px).
   // All positions are calculated as fractions of this.
-  const DAY_HEIGHT_PX = 980; // 100px per hour
+  const DAY_HEIGHT_PX = 1200; // 100px per hour
 
   // Height of the sticky day header (px) — must match CSS
   const HEADER_HEIGHT_PX = 64;
@@ -101,7 +101,7 @@ const Calendar = (() => {
       // ── Timed events area ──
       const eventsArea = document.createElement('div');
       eventsArea.className = 'events-area';
-      eventsArea.style.top    = `${HEADER_HEIGHT_PX + ALL_DAY_HEIGHT_PX}px`;
+      //eventsArea.style.top    = `${HEADER_HEIGHT_PX + ALL_DAY_HEIGHT_PX}px`;
       eventsArea.style.height = `${DAY_HEIGHT_PX}px`;
       eventsArea.style.position = 'relative';
 
@@ -200,11 +200,16 @@ const Calendar = (() => {
         cluster.forEach((ev, clusterIdx) => {
           const clusterCount = cluster.length;
 
-          const topPx    = _timeToPx(ev.start, state.timeView, state.bandStartHour);
-          const bottomPx = _timeToPx(ev.end,   state.timeView, state.bandStartHour);
-          if (topPx === null) return;
+          const dayStart = Utils.startOfDay(day);
+          const dayEnd = Utils.addDays(dayStart, 1);
+          const segmentStart = ev.start < dayStart ? dayStart : ev.start;
+          const segmentEnd = ev.end > dayEnd ? dayEnd : ev.end;
 
-          const heightPx = Math.max((bottomPx ?? DAY_HEIGHT_PX) - topPx, 22);
+          const topPx    = _timeToPxClamped(segmentStart, day, state.timeView, state.bandStartHour);
+          const bottomPx = _timeToPxClamped(segmentEnd,   day, state.timeView, state.bandStartHour);
+          if (bottomPx <= 0 || topPx >= DAY_HEIGHT_PX) return;
+
+          const heightPx = Math.max(bottomPx - topPx, 22);
 
           // Within a person's lane, cascade overlapping events
           const evWidthPct  = laneWidthPct / clusterCount;
@@ -259,24 +264,35 @@ const Calendar = (() => {
   // ── Helpers ───────────────────────────────────────────────────────────
 
   /** Return events on a given day for visible people */
-  const _eventsForDay = (events, day, visibility) =>
-    events.filter(ev =>
+  const _eventsForDay = (events, day, visibility) => {
+    const dayStart = Utils.startOfDay(day);
+    const dayEnd = Utils.addDays(dayStart, 1);
+
+    return events.filter(ev =>
       visibility[ev.personId] &&
-      (Utils.isSameDay(ev.start, day) ||
-       (ev.allDay && ev.start <= day && ev.end > day))
+      ev.start < dayEnd &&
+      ev.end > dayStart
     );
+  };
 
   /**
    * Which hours are rendered in this time view?
    * 5hour: bandStartHour to bandStartHour+5 (inclusive labels)
-   * 24hour: 0..23
+   * 24hour: 0..24
    */
   const _getVisibleHours = (timeView, bandStartHour) => {
     if (timeView === '5hour') {
       return Array.from({ length: 6 }, (_, i) => bandStartHour + i);
     }
-    // Every 5 hours for gridlines in 24h mode
-    return [0, 5, 10, 15, 20, 23];
+    // Every 5 hours for gridlines in 24h mode, ending at midnight
+    return [0, 5, 10, 15, 20, 24];
+  };
+
+  const _normalizeHourForBand = (hour, bandStartHour) => {
+    if (bandStartHour > 19 && hour < bandStartHour) {
+      return hour + 24;
+    }
+    return hour;
   };
 
   /**
@@ -286,7 +302,7 @@ const Calendar = (() => {
    */
   const _hourToPx = (hour, timeView, bandStartHour) => {
     if (timeView === '5hour') {
-      return ((hour - bandStartHour) / 5) * DAY_HEIGHT_PX;
+      return ((_normalizeHourForBand(hour, bandStartHour) - bandStartHour) / 5) * DAY_HEIGHT_PX;
     }
     return (hour / 24) * DAY_HEIGHT_PX;
   };
@@ -295,15 +311,44 @@ const Calendar = (() => {
    * Convert a Date to a pixel offset. Returns null if outside visible range.
    */
   const _timeToPx = (date, timeView, bandStartHour) => {
-    const hours = date.getHours() + date.getMinutes() / 60;
+    let hours = date.getHours() + date.getMinutes() / 60;
 
     if (timeView === '5hour') {
+      if (bandStartHour > 19 && hours < bandStartHour) {
+        hours += 24;
+      }
       const bandEnd = bandStartHour + 5;
       if (hours < bandStartHour || hours > bandEnd) return null;
       return ((hours - bandStartHour) / 5) * DAY_HEIGHT_PX;
     }
 
     return (hours / 24) * DAY_HEIGHT_PX;
+  };
+
+  const _hoursSinceDayStart = (date, day) => {
+    const dayStart = Utils.startOfDay(day).getTime();
+    const dayEnd = Utils.addDays(Utils.startOfDay(day), 1).getTime();
+    const time = date.getTime();
+    if (time === dayEnd) return 24;
+    return Math.max(0, Math.min(24, (time - dayStart) / 3_600_000));
+  };
+
+  /**
+   * Convert a Date to a pixel offset, clamping times to the visible band.
+   */
+  const _timeToPxClamped = (date, day, timeView, bandStartHour) => {
+    let hours = _hoursSinceDayStart(date, day);
+
+    if (timeView === '5hour') {
+      if (bandStartHour > 19 && hours < bandStartHour) {
+        hours += 24;
+      }
+      const bandEnd = bandStartHour + 5;
+      const clamped = Math.min(Math.max(hours, bandStartHour), bandEnd);
+      return ((clamped - bandStartHour) / 5) * DAY_HEIGHT_PX;
+    }
+
+    return (Math.min(Math.max(hours, 0), 24) / 24) * DAY_HEIGHT_PX;
   };
 
   /** Scroll the grid so the band start (or current time area) is in view */

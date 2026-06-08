@@ -78,12 +78,13 @@ const Utils = (() => {
   };
 
   /**
-   * Given an hour (0–23), return a formatted label like "12 AM", "5 PM".
+   * Given an hour, return a formatted label like "12 AM", "5 PM".
    */
   const hourLabel = (hour) => {
-    if (hour === 0)  return '12 AM';
-    if (hour === 12) return '12 PM';
-    return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
+    const normalized = ((hour % 24) + 24) % 24;
+    if (normalized === 0)  return '12 AM';
+    if (normalized === 12) return '12 PM';
+    return normalized < 12 ? `${normalized} AM` : `${normalized - 12} PM`;
   };
 
   return { dayName, dayNum, dayLabel, timeStr, isSameDay, isToday, startOfDay, addDays, clamp, hexToRgba, rangeLabel, hourLabel };

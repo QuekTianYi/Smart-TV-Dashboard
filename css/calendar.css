@@ -153,7 +153,7 @@
   position: absolute;
   border-radius: var(--radius-sm);
   padding: 4px 7px;
-  overflow: hidden;
+  /* overflow: hidden; */
   cursor: default;
   transition: filter var(--transition), transform var(--transition);
   border-left: 3px solid var(--event-colour);
