@@ -43,8 +43,9 @@ const Calendar = (() => {
     // Hour labels
     const hours = _getVisibleHours(timeView, bandStartHour);
     hours.forEach(hour => {
+      const isMajor = timeView === '5hour' || hour % 6 === 0;
       const label = document.createElement('div');
-      label.className = 'time-label';
+      label.className = 'time-label' + (isMajor ? ' major' : '');
       label.textContent = Utils.hourLabel(hour);
       label.style.top = `${HEADER_HEIGHT_PX + ALL_DAY_HEIGHT_PX + _hourToPx(hour, timeView, bandStartHour, DAY_H)}px`;
       gutter.appendChild(label);
@@ -185,77 +186,84 @@ const Calendar = (() => {
   // ── Events ────────────────────────────────────────────────────────────
 
   const _renderEvents = (container, events, state, day, DAY_H) => {
-    const visiblePeople = CONFIG.people
-      .map((p, i) => ({ ...p, personId: i }))
-      .filter(p => state.visibility[p.personId]);
+    if (!events.length) return;
 
-    if (visiblePeople.length === 0) return;
+    const meta     = _assignEventColumns(events);
+    const dayStart = Utils.startOfDay(day);
+    const dayEnd   = Utils.addDays(dayStart, 1);
 
-    const laneWidthPct = 100 / visiblePeople.length;
+    events.forEach(ev => {
+      const { col, totalCols } = meta.get(ev.id) || { col: 0, totalCols: 1 };
+      const person = CONFIG.people[ev.personId];
 
-    visiblePeople.forEach((person, laneIdx) => {
-      const personEvents = events
-        .filter(e => e.personId === person.personId)
-        .sort((a, b) => a.start - b.start);
+      const segStart = ev.start < dayStart ? dayStart : ev.start;
+      const segEnd   = ev.end   > dayEnd   ? dayEnd   : ev.end;
 
-      if (personEvents.length === 0) return;
+      const topPx    = _timeToPxClamped(segStart, day, state.timeView, state.bandStartHour, DAY_H);
+      const bottomPx = _timeToPxClamped(segEnd,   day, state.timeView, state.bandStartHour, DAY_H);
+      if (bottomPx <= 0 || topPx >= DAY_H) return;
 
-      const laneLeft = laneIdx * laneWidthPct;
-      const clusters = _clusterEvents(personEvents);
+      const heightPx = Math.max(bottomPx - topPx, 22);
+      const widthPct = 100 / totalCols;
+      const leftPct  = col * widthPct;
 
-      clusters.forEach(cluster => {
-        cluster.forEach((ev, clusterIdx) => {
-          const dayStart     = Utils.startOfDay(day);
-          const dayEnd       = Utils.addDays(dayStart, 1);
-          const segmentStart = ev.start < dayStart ? dayStart : ev.start;
-          const segmentEnd   = ev.end   > dayEnd   ? dayEnd   : ev.end;
+      const block = document.createElement('div');
+      block.className = 'event-block';
+      block.style.top    = `${topPx}px`;
+      block.style.height = `${heightPx}px`;
+      block.style.left   = `${leftPct}%`;
+      block.style.width  = `${widthPct - 0.5}%`;
+      block.style.setProperty('--event-colour', person.colour);
+      block.style.setProperty('--event-bg', Utils.hexToRgba(person.colour, 0.15));
+      block.style.zIndex = col;
 
-          const topPx    = _timeToPxClamped(segmentStart, day, state.timeView, state.bandStartHour, DAY_H);
-          const bottomPx = _timeToPxClamped(segmentEnd,   day, state.timeView, state.bandStartHour, DAY_H);
-          if (bottomPx <= 0 || topPx >= DAY_H) return;
+      block.innerHTML = `
+        <div class="event-title">${ev.title}</div>
+        ${heightPx > 36 ? `<div class="event-time">${Utils.timeStr(ev.start)} – ${Utils.timeStr(ev.end)}</div>` : ''}
+      `;
 
-          const heightPx    = Math.max(bottomPx - topPx, 22);
-          const evWidthPct  = laneWidthPct / cluster.length;
-          const evLeftPct   = laneLeft + clusterIdx * evWidthPct;
-
-          const block = document.createElement('div');
-          block.className = 'event-block';
-          block.style.top    = `${topPx}px`;
-          block.style.height = `${heightPx}px`;
-          block.style.left   = `${evLeftPct}%`;
-          block.style.width  = `${evWidthPct - 1}%`;
-          block.style.setProperty('--event-colour', person.colour);
-          block.style.setProperty('--event-bg', Utils.hexToRgba(person.colour, 0.15));
-          block.style.zIndex = clusterIdx;
-
-          block.innerHTML = `
-            <div class="event-title">${ev.title}</div>
-            ${heightPx > 36 ? `<div class="event-time">${Utils.timeStr(ev.start)} – ${Utils.timeStr(ev.end)}</div>` : ''}
-          `;
-
-          container.appendChild(block);
-        });
-      });
+      container.appendChild(block);
     });
   };
 
-  const _clusterEvents = (events) => {
-    const clusters = [];
-    let cluster = [], clusterEnd = null;
+  /**
+   * Assign each event a column index and total column count within its
+   * overlap group, so events that don't overlap span the full width.
+   */
+  const _assignEventColumns = (events) => {
+    const sorted = [...events].sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+    const meta   = new Map(); // id → { col, totalCols }
+    const cols   = [];        // cols[i] = latest end time placed in column i
 
-    events.forEach(ev => {
-      if (!clusterEnd || ev.start >= clusterEnd) {
-        if (cluster.length) clusters.push(cluster);
-        cluster    = [ev];
-        clusterEnd = ev.end;
-      } else {
-        cluster.push(ev);
-        if (ev.end > clusterEnd) clusterEnd = ev.end;
-      }
+    sorted.forEach(ev => {
+      let col = cols.findIndex(end => end <= ev.start);
+      if (col === -1) col = cols.length;
+      cols[col] = ev.end;
+      meta.set(ev.id, { col, totalCols: 1 });
     });
 
-    if (cluster.length) clusters.push(cluster);
-    return clusters;
+    // Find connected groups and set totalCols = max col used in that group + 1
+    const visited = new Set();
+    sorted.forEach(seed => {
+      if (visited.has(seed.id)) return;
+      // BFS over overlapping events
+      const group = [];
+      const queue = [seed];
+      while (queue.length) {
+        const curr = queue.shift();
+        if (visited.has(curr.id)) continue;
+        visited.add(curr.id);
+        group.push(curr);
+        sorted.forEach(other => {
+          if (!visited.has(other.id) && other.start < curr.end && other.end > curr.start)
+            queue.push(other);
+        });
+      }
+      const groupCols = group.reduce((mx, ev) => Math.max(mx, meta.get(ev.id).col), 0) + 1;
+      group.forEach(ev => { meta.get(ev.id).totalCols = groupCols; });
+    });
+
+    return meta;
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────

@@ -28,6 +28,11 @@
   text-transform: uppercase;
 }
 
+.time-label.major {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
 /* ── Calendar Grid ──────────────────────────────────────────────────────── */
 .calendar-grid {
   flex: 1;

@@ -53,6 +53,51 @@ const Sidebar = (() => {
 
       list.appendChild(item);
     });
+
+    // ── Features section ────────────────────────────────────────────────
+    _renderFeaturesSection();
+  };
+
+  const _renderFeaturesSection = () => {
+    // Remove existing features section if re-rendering
+    const existing = document.getElementById('features-section');
+    if (existing) existing.remove();
+
+    const list   = document.getElementById('person-list');
+    const section = document.createElement('div');
+    section.id = 'features-section';
+
+    const label = document.createElement('div');
+    label.className = 'sidebar-section-label';
+    label.textContent = 'Display';
+    section.appendChild(label);
+
+    // Sky toggle
+    const skyItem = document.createElement('div');
+    skyItem.className = 'sky-toggle-item' + (Sky.isEnabled() ? ' active' : '');
+    skyItem.id        = 'sky-toggle-item';
+    skyItem.innerHTML = `
+      <span class="sky-icon" id="sky-icon">${Sky.getSkyIcon()}</span>
+      <span class="sky-toggle-label">Sky</span>
+      <span class="sky-check"></span>
+    `;
+    skyItem.addEventListener('click', () => {
+      Sky.toggle();
+      skyItem.classList.toggle('active', Sky.isEnabled());
+      _tickSkyIcon();
+    });
+    section.appendChild(skyItem);
+
+    // Insert between person list and footer
+    list.insertAdjacentElement('afterend', section);
+
+    // Refresh the icon every minute
+    setInterval(_tickSkyIcon, 60_000);
+  };
+
+  const _tickSkyIcon = () => {
+    const el = document.getElementById('sky-icon');
+    if (el) el.textContent = Sky.getSkyIcon();
   };
 
   const updateItem = (item, personId) => {

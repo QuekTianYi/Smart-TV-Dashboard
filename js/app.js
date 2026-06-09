@@ -41,6 +41,7 @@
   Toolbar.render();
   Input.init();
   Calendar.render();
+  Sky.init();
 
   // ── Cache helpers ────────────────────────────────────────────────────
 

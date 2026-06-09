@@ -1,0 +1,137 @@
+/* ── Sky ambient background ─────────────────────────────────────────────── */
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transition: background 60s linear;
+}
+
+/* Ensure toolbar and calendar sit above the sky layer */
+.toolbar,
+.calendar-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fade the sky layer so calendar content stays readable */
+.sky-layer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  opacity: 0;
+}
+
+/* ── Sun ──────────────────────────────────────────────────────────────── */
+
+.sky-body {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 60s linear, top 60s linear;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.sky-body.sun {
+  background: radial-gradient(circle, #fff9c0 0%, #ffe066 40%, #ffb300 70%, rgba(255,180,0,0) 100%);
+  box-shadow: 0 0 40px 16px rgba(255, 200, 60, 0.45),
+              0 0 80px 40px rgba(255, 160, 30, 0.18);
+}
+
+.sky-body.moon {
+  background: radial-gradient(circle, #f0f0f8 0%, #d0d0e0 50%, #a0a0c0 80%, rgba(160,160,200,0) 100%);
+  box-shadow: 0 0 24px 8px rgba(200, 200, 240, 0.25),
+              0 0 60px 24px rgba(150, 150, 200, 0.10);
+}
+
+/* Sun corona glow */
+.sky-glow {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,200,60,0.18) 0%, rgba(255,160,30,0.06) 60%, transparent 100%);
+  transition: opacity 2s ease;
+}
+
+/* ── Sidebar sky toggle ──────────────────────────────────────────────── */
+
+.sky-toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition);
+}
+
+.sky-toggle-item:hover {
+  background: var(--bg-elevated);
+}
+
+.sky-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sky-toggle-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.sky-check {
+  width: 28px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--text-dim);
+  position: relative;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.sky-check::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform var(--transition), background var(--transition);
+}
+
+.sky-toggle-item.active .sky-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sky-toggle-item.active .sky-check::after {
+  transform: translateX(12px);
+  background: #fff;
+}
+
+/* ── Section separator in sidebar ────────────────────────────────────── */
+#features-section {
+  border-top: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.sidebar-section-label {
+  padding: 10px 16px 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
