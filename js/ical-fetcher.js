@@ -128,7 +128,7 @@ const ICalFetcher = (() => {
   };
 
   /**
-   * Fetch and parse ALL calendars for ALL people.
+   * Fetch and parse ALL calendars for ALL people in parallel.
    * Returns a flat array of normalised events for the given date range.
    *
    * @param {Date} rangeStart
@@ -136,23 +136,31 @@ const ICalFetcher = (() => {
    * @returns {Promise<Array>}
    */
   const fetchAll = async (rangeStart, rangeEnd) => {
+    // Build a flat list of { personId, person, cal } tasks
+    const tasks = [];
+    CONFIG.people.forEach((person, personId) => {
+      person.calendars.forEach(cal => tasks.push({ personId, person, cal }));
+    });
+
+    // Fire all HTTP requests in parallel
+    const results = await Promise.allSettled(
+      tasks.map(({ personId, cal }) =>
+        fetchICS(cal.url).then(icsText => parseICS(icsText, personId, rangeStart, rangeEnd))
+      )
+    );
+
     const allEvents = [];
     const errors    = [];
 
-    for (let personId = 0; personId < CONFIG.people.length; personId++) {
-      const person = CONFIG.people[personId];
-
-      for (const cal of person.calendars) {
-        try {
-          const icsText = await fetchICS(cal.url);
-          const parsed  = parseICS(icsText, personId, rangeStart, rangeEnd);
-          allEvents.push(...parsed);
-        } catch (e) {
-          errors.push({ person: person.name, label: cal.label, error: e.message });
-          console.warn(`Calendar fetch failed for ${person.name} / ${cal.label}:`, e.message);
-        }
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
+        allEvents.push(...result.value);
+      } else {
+        const { person, cal } = tasks[i];
+        errors.push({ person: person.name, label: cal.label, error: result.reason?.message });
+        console.warn(`Calendar fetch failed for ${person.name} / ${cal.label}:`, result.reason?.message);
       }
-    }
+    });
 
     return { events: allEvents, errors };
   };
