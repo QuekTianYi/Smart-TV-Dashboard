@@ -38,6 +38,17 @@ const Utils = (() => {
   };
 
   /**
+   * Returns the Monday of the week containing the given date.
+   */
+  const startOfWeek = (date) => {
+    const d   = new Date(date);
+    const day = d.getDay(); // 0=Sun, 1=Mon...
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  /**
    * Add `n` days to a Date, returning a new Date.
    */
   const addDays = (date, n) => {
@@ -87,5 +98,5 @@ const Utils = (() => {
     return normalized < 12 ? `${normalized} AM` : `${normalized - 12} PM`;
   };
 
-  return { dayName, dayNum, dayLabel, timeStr, isSameDay, isToday, startOfDay, addDays, clamp, hexToRgba, rangeLabel, hourLabel };
+  return { dayName, dayNum, dayLabel, timeStr, isSameDay, isToday, startOfDay, startOfWeek, addDays, clamp, hexToRgba, rangeLabel, hourLabel };
 })();

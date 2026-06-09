@@ -1,15 +1,21 @@
-/* ── Root Variables ─────────────────────────────────────────────────────── */
+/* ── Root Variables (dark / night mode — default) ───────────────────────── */
 :root {
   --bg:           #0a0a0f;
   --bg-surface:   #13131a;
   --bg-elevated:  #1c1c26;
   --border:       rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.15);
   --text-primary: #e8e8f0;
   --text-muted:   #6b6b80;
   --text-dim:     #3d3d52;
   --accent:       #5b5bff;
   --today-bg:     rgba(91, 91, 255, 0.06);
   --today-border: rgba(91, 91, 255, 0.35);
+
+  --hour-line:       rgba(255,255,255,0.04);
+  --hour-line-major: rgba(255,255,255,0.09);
+  --event-text:      #ffffff;
+  --event-text-dim:  rgba(255,255,255,0.65);
 
   --sidebar-width:  220px;
   --toolbar-height: 56px;
@@ -20,6 +26,25 @@
   --radius-lg: 16px;
 
   --transition: 180ms ease;
+}
+
+/* ── Light / day mode overrides ─────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f2f2f7;
+  --bg-surface:   #ffffff;
+  --bg-elevated:  #e5e5ea;
+  --border:       rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.2);
+  --text-primary: #1c1c1e;
+  --text-muted:   #636366;
+  --text-dim:     #aeaeb2;
+  --today-bg:     rgba(91, 91, 255, 0.07);
+  --today-border: rgba(91, 91, 255, 0.4);
+
+  --hour-line:       rgba(0,0,0,0.06);
+  --hour-line-major: rgba(0,0,0,0.12);
+  --event-text:      #1c1c1e;
+  --event-text-dim:  rgba(28,28,30,0.55);
 }
 
 /* ── App Shell ──────────────────────────────────────────────────────────── */

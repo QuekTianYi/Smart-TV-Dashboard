@@ -8,6 +8,7 @@
   <!-- ical.js — parses .ics files from both Google and Apple Calendar -->
   <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
 
+  <script>(function(){var t=localStorage.getItem('theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
   <link rel="stylesheet" href="css/reset.css"/>
   <link rel="stylesheet" href="css/main.css"/>
   <link rel="stylesheet" href="css/sidebar.css"/>
@@ -44,8 +45,10 @@
           <!-- Date range label, e.g. "Mon 2 – Sun 8 Jun" -->
         </div>
         <div class="toolbar-group">
-          <button class="toolbar-btn" data-action="time-5hour">5 Hr</button>
-          <button class="toolbar-btn active" data-action="time-24hour">24 Hr</button>
+          <button class="toolbar-btn" data-action="time-5hour">5H</button>
+          <button class="toolbar-btn active" data-action="time-24hour">24H</button>
+          <button class="toolbar-btn" data-action="theme-day">Day</button>
+          <button class="toolbar-btn" data-action="theme-night">Night</button>
           <button class="toolbar-btn nav-btn" data-action="prev">&#8592;</button>
           <button class="toolbar-btn nav-btn" data-action="today">Today</button>
           <button class="toolbar-btn nav-btn" data-action="next">&#8594;</button>

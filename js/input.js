@@ -88,20 +88,12 @@ const Input = (() => {
 
       case 'ArrowUp':
         e.preventDefault();
-        if (timeView === '5hour') {
-          State.shiftBand('up');
-        } else {
-          _scrollCalendar(-120);
-        }
+        if (timeView === '5hour') State.shiftBand('up');
         break;
 
       case 'ArrowDown':
         e.preventDefault();
-        if (timeView === '5hour') {
-          State.shiftBand('down');
-        } else {
-          _scrollCalendar(120);
-        }
+        if (timeView === '5hour') State.shiftBand('down');
         break;
 
       case 'ArrowLeft':
@@ -128,6 +120,11 @@ const Input = (() => {
       case 'H':
         // Toggle time view
         State.set({ timeView: State.get().timeView === '5hour' ? '24hour' : '5hour' });
+        break;
+
+      case 'n':
+      case 'N':
+        Toolbar.toggleTheme();
         break;
     }
   };
@@ -166,21 +163,12 @@ const Input = (() => {
         return;
       }
 
-      // Vertical scroll
+      // Vertical scroll — only meaningful in 5h band mode
       if (timeView === '5hour') {
-        // Shift band up/down every 150px of scroll
         if (e.deltaY > 50)  State.shiftBand('down');
         if (e.deltaY < -50) State.shiftBand('up');
-      } else {
-        // 24h mode: native scroll
-        _scrollCalendar(e.deltaY);
       }
     }, { passive: false });
-  };
-
-  const _scrollCalendar = (delta) => {
-    const grid = document.getElementById('calendar-grid');
-    if (grid) grid.scrollTop += delta;
   };
 
   return { init };

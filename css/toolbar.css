@@ -49,7 +49,7 @@
 .toolbar-btn.active {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: rgba(255,255,255,0.15);
+  border-color: var(--border-strong);
 }
 
 .toolbar-btn.nav-btn {

@@ -119,13 +119,15 @@ const State = (() => {
 
   /** Jump anchor back to today */
   const goToToday = () => {
-    set({ anchorDate: new Date(), bandStartHour: _calcDefaultBandStart() });
+    const today  = new Date();
+    const anchor = _state.dayView === '7day' ? Utils.startOfWeek(today) : today;
+    set({ anchorDate: anchor, bandStartHour: _calcDefaultBandStart() });
   };
 
   /** Shift the 5-hour band up or down by one hour */
   const shiftBand = (direction) => {
     const delta = direction === 'up' ? -1 : 1;
-    set({ bandStartHour: Utils.clamp(_state.bandStartHour + delta, 0, 23) });
+    set({ bandStartHour: Utils.clamp(_state.bandStartHour + delta, 0, 19) });
   };
 
   return { get, set, onChange, togglePerson, getVisibleRange, navigate, goToToday, shiftBand };

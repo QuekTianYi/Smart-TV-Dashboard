@@ -4,18 +4,17 @@
 
 const Calendar = (() => {
 
-  const HEADER_HEIGHT_PX  = 64;
-  const ALL_DAY_HEIGHT_PX = 32;
+  const TOOLBAR_HEIGHT_PX = 56;  // must match --toolbar-height in CSS
+  const HEADER_HEIGHT_PX  = 64;  // must match day-header height in CSS
+  const ALL_DAY_HEIGHT_PX = 32;  // must match all-day-strip height in CSS
 
   let _nowLineTimer = null;
 
-  // Compute the events-area pixel height from the actual container size
-  // so the grid fills the screen exactly with no leftover space.
-  const _getDayHeightPx = () => {
-    const c = document.getElementById('calendar-container');
-    if (!c) return 960;
-    return Math.max(c.clientHeight - HEADER_HEIGHT_PX - ALL_DAY_HEIGHT_PX, 100);
-  };
+  // Use window.innerHeight minus known fixed heights so the events area
+  // fills the screen exactly. More reliable than clientHeight (avoids
+  // measuring before layout or sub-pixel rounding issues).
+  const _getDayHeightPx = () =>
+    window.innerHeight - TOOLBAR_HEIGHT_PX - HEADER_HEIGHT_PX - ALL_DAY_HEIGHT_PX;
 
   // ── Public ────────────────────────────────────────────────────────────
 
@@ -132,9 +131,10 @@ const Calendar = (() => {
 
   const _addGridLines = (container, state, DAY_H) => {
     const { timeView, bandStartHour } = state;
+    const majorInterval = timeView === '5hour' ? 5 : 6;
     _getVisibleHours(timeView, bandStartHour).forEach(hour => {
       const line = document.createElement('div');
-      line.className = 'hour-line' + (hour % 5 === 0 ? ' major' : '');
+      line.className = 'hour-line' + (hour % majorInterval === 0 ? ' major' : '');
       line.style.top = `${_hourToPx(hour, timeView, bandStartHour, DAY_H)}px`;
       container.appendChild(line);
     });
@@ -278,9 +278,10 @@ const Calendar = (() => {
 
   const _getVisibleHours = (timeView, bandStartHour) => {
     if (timeView === '5hour') {
-      return Array.from({ length: 6 }, (_, i) => bandStartHour + i);
+      return Array.from({ length: 6 }, (_, i) => bandStartHour >= 24 - 4 ? bandStartHour : bandStartHour + i );
     }
-    return [0, 5, 10, 15, 20, 24];
+    // 24h mode: label and gridline every 3 hours
+    return [0, 3, 6, 9, 12, 15, 18, 21, 24];
   };
 
   const _normalizeHourForBand = (hour, bandStartHour) =>
@@ -296,7 +297,7 @@ const Calendar = (() => {
   const _timeToPx = (date, timeView, bandStartHour, DAY_H) => {
     let hours = date.getHours() + date.getMinutes() / 60;
     if (timeView === '5hour') {
-      if (bandStartHour > 19 && hours < bandStartHour) hours += 24;
+      if (bandStartHour > 19 && hours < bandStartHour + 5 - 24) hours += 24;
       const bandEnd = bandStartHour + 5;
       if (hours < bandStartHour || hours > bandEnd) return null;
       return ((hours - bandStartHour) / 5) * DAY_H;
@@ -315,7 +316,7 @@ const Calendar = (() => {
   const _timeToPxClamped = (date, day, timeView, bandStartHour, DAY_H) => {
     let hours = _hoursSinceDayStart(date, day);
     if (timeView === '5hour') {
-      if (bandStartHour > 19 && hours < bandStartHour) hours += 24;
+      if (bandStartHour > 19 && hours < bandStartHour + 5 - 24) hours += 24;
       const bandEnd  = bandStartHour + 5;
       const clamped  = Math.min(Math.max(hours, bandStartHour), bandEnd);
       return ((clamped - bandStartHour) / 5) * DAY_H;

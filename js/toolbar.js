@@ -8,6 +8,7 @@ const Toolbar = (() => {
     document.querySelectorAll('.toolbar-btn[data-action]').forEach(btn => {
       btn.addEventListener('click', () => handleAction(btn.dataset.action));
     });
+    _initTheme();
     syncActiveButtons();
     updateLabel();
   };
@@ -17,12 +18,11 @@ const Toolbar = (() => {
       case 'view-3day':
         State.set({ dayView: '3day' });
         break;
-      case 'view-7day':
-        // In 7-day view, anchor = start of current visible week (Monday)
-        const anchor = State.get().anchorDate;
-        const monday = _getMondayOf(anchor);
+      case 'view-7day': {
+        const monday = Utils.startOfWeek(State.get().anchorDate);
         State.set({ dayView: '7day', anchorDate: monday });
         break;
+      }
       case 'time-5hour':
         State.set({ timeView: '5hour' });
         break;
@@ -37,6 +37,12 @@ const Toolbar = (() => {
         break;
       case 'today':
         State.goToToday();
+        break;
+      case 'theme-day':
+        _applyTheme('light');
+        break;
+      case 'theme-night':
+        _applyTheme('dark');
         break;
     }
     syncActiveButtons();
@@ -62,13 +68,24 @@ const Toolbar = (() => {
     label.textContent = Utils.rangeLabel(days[0], days[days.length - 1]);
   };
 
-  const _getMondayOf = (date) => {
-    const d   = new Date(date);
-    const day = d.getDay(); // 0=Sun, 1=Mon...
-    const diff = (day === 0) ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
-    return d;
+  // ── Theme ──────────────────────────────────────────────────────────────
+
+  const _initTheme = () => {
+    const saved = localStorage.getItem('theme') || 'dark';
+    _applyTheme(saved);
+  };
+
+  const _applyTheme = (theme) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    document.querySelectorAll('.toolbar-btn[data-action^="theme-"]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.action === `theme-${theme}`);
+    });
+  };
+
+  const toggleTheme = () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    _applyTheme(current === 'dark' ? 'light' : 'dark');
   };
 
   // Re-sync on state changes that affect toolbar appearance
@@ -79,5 +96,5 @@ const Toolbar = (() => {
     }
   });
 
-  return { render };
+  return { render, toggleTheme };
 })();
