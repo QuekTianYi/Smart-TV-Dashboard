@@ -2,20 +2,50 @@
  * input.js — keyboard, TV remote d-pad, and mouse scroll handling
  *
  * Tizen TV remote key codes:
- *   Left  = 37, Right = 38 (same as keyboard arrow keys)
- *   Up    = 38, Down  = 40
+ *   Left = 37, Up = 38, Right = 39, Down = 40 (same as keyboard arrow keys)
  *   Enter = 13
  *   Back  = 10009
  *   Play/Pause = 415 / 19
+ *
+ * Focus zones (for remote/keyboard nav): 'toolbar' | 'calendar' | 'sidebar'
+ *   calendar → toolbar   : double-tap ArrowUp
+ *   calendar → sidebar   : double-tap the arrow key facing the sidebar
+ *                          (ArrowRight/ArrowLeft, whichever CONFIG.sidebarPosition is)
+ *   toolbar  → calendar  : ArrowDown
+ *   toolbar  → sidebar   : ArrowLeft/ArrowRight past the button nearest the sidebar
+ *   sidebar  → calendar  : ArrowLeft/ArrowRight back toward the calendar
+ * A single press of an arrow key always does its normal in-zone action
+ * (day nav, band scroll) — only a second press of the same key within
+ * DOUBLE_TAP_MS switches focus zones.
+ * Tab also cycles through all three zones, for keyboard testing in a browser.
  */
 
 const Input = (() => {
 
-  // Which UI element currently has "focus" for remote nav: 'sidebar' | 'calendar'
+  // Which UI zone currently has "focus" for remote nav: 'toolbar' | 'sidebar' | 'calendar'
   let _focus = 'calendar';
 
   // Index of focused person in sidebar (for remote nav)
   let _sidebarFocusIdx = 0;
+
+  // Index of focused button in the toolbar (for remote nav)
+  let _toolbarFocusIdx = 0;
+
+  // Which side the sidebar renders on — determines which arrow key reaches it
+  const _sidebarSide = CONFIG.sidebarPosition === 'right' ? 'right' : 'left';
+
+  // Double-tap detection (same key pressed twice within this window = zone switch)
+  const DOUBLE_TAP_MS = 400;
+  let _lastKey = null;
+  let _lastKeyTime = 0;
+
+  const _isDoubleTap = (key) => {
+    const now = Date.now();
+    const isDouble = _lastKey === key && (now - _lastKeyTime) < DOUBLE_TAP_MS;
+    _lastKey = isDouble ? null : key;
+    _lastKeyTime = now;
+    return isDouble;
+  };
 
   const init = () => {
     document.addEventListener('keydown', _onKeyDown);
@@ -25,22 +55,67 @@ const Input = (() => {
   // ── Keyboard / Remote ─────────────────────────────────────────────────
 
   const _onKeyDown = (e) => {
-    const key = e.key || e.keyCode;
-
-    // Tab switches focus between sidebar and calendar
+    // Tab cycles focus through toolbar → calendar → sidebar (keyboard only —
+    // TV remotes don't send Tab, but the zone switches below cover those)
     if (e.key === 'Tab') {
       e.preventDefault();
-      _focus = _focus === 'sidebar' ? 'calendar' : 'sidebar';
-      _syncSidebarFocus();
+      const order = ['toolbar', 'calendar', 'sidebar'];
+      _focus = order[(order.indexOf(_focus) + 1) % order.length];
+      _syncFocus();
       return;
     }
 
-    if (_focus === 'sidebar') {
+    if (_focus === 'toolbar') {
+      _handleToolbarKey(e);
+    } else if (_focus === 'sidebar') {
       _handleSidebarKey(e);
     } else {
       _handleCalendarKey(e);
     }
   };
+
+  // ── Toolbar ────────────────────────────────────────────────────────────
+
+  const _handleToolbarKey = (e) => {
+    const buttons = _toolbarButtons();
+    if (!buttons.length) return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (_sidebarSide === 'left' && _toolbarFocusIdx === 0) {
+          _focus = 'sidebar';
+        } else {
+          _toolbarFocusIdx = Utils.clamp(_toolbarFocusIdx - 1, 0, buttons.length - 1);
+        }
+        _syncFocus();
+        break;
+
+      case 'ArrowRight':
+        e.preventDefault();
+        if (_sidebarSide === 'right' && _toolbarFocusIdx === buttons.length - 1) {
+          _focus = 'sidebar';
+        } else {
+          _toolbarFocusIdx = Utils.clamp(_toolbarFocusIdx + 1, 0, buttons.length - 1);
+        }
+        _syncFocus();
+        break;
+
+      case 'ArrowDown':
+        e.preventDefault();
+        _focus = 'calendar';
+        _syncFocus();
+        break;
+
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        buttons[_toolbarFocusIdx].click();
+        break;
+    }
+  };
+
+  // ── Sidebar ────────────────────────────────────────────────────────────
 
   const _handleSidebarKey = (e) => {
     const people = CONFIG.people;
@@ -49,13 +124,13 @@ const Input = (() => {
       case 'ArrowUp':
         e.preventDefault();
         _sidebarFocusIdx = Utils.clamp(_sidebarFocusIdx - 1, 0, people.length - 1);
-        _syncSidebarFocus();
+        _syncFocus();
         break;
 
       case 'ArrowDown':
         e.preventDefault();
         _sidebarFocusIdx = Utils.clamp(_sidebarFocusIdx + 1, 0, people.length - 1);
-        _syncSidebarFocus();
+        _syncFocus();
         break;
 
       case 'Enter':
@@ -64,42 +139,61 @@ const Input = (() => {
         State.togglePerson(_sidebarFocusIdx);
         break;
 
+      case 'ArrowLeft':
+        if (_sidebarSide === 'right') {
+          e.preventDefault();
+          _focus = 'calendar';
+          _syncFocus();
+        }
+        break;
+
       case 'ArrowRight':
-        // Move focus to calendar
-        _focus = 'calendar';
-        _blurSidebar();
+        if (_sidebarSide === 'left') {
+          e.preventDefault();
+          _focus = 'calendar';
+          _syncFocus();
+        }
         break;
     }
   };
 
   const _handleCalendarKey = (e) => {
-    const { timeView } = State.get();
+    const { timeView, bandStartHour } = State.get();
 
     switch (e.key) {
       case 'ArrowLeft':
         e.preventDefault();
-        State.navigate('prev');
+        if (_sidebarSide === 'left' && _isDoubleTap('ArrowLeft')) {
+          _focus = 'sidebar';
+          _syncFocus();
+        } else {
+          State.navigate('prev');
+        }
         break;
 
       case 'ArrowRight':
         e.preventDefault();
-        State.navigate('next');
+        if (_sidebarSide === 'right' && _isDoubleTap('ArrowRight')) {
+          _focus = 'sidebar';
+          _syncFocus();
+        } else {
+          State.navigate('next');
+        }
         break;
 
       case 'ArrowUp':
         e.preventDefault();
-        if (timeView === '5hour') State.shiftBand('up');
+        if (_isDoubleTap('ArrowUp')) {
+          _focus = 'toolbar';
+          _syncFocus();
+        } else if (timeView === '5hour' && bandStartHour > 0) {
+          State.shiftBand('up');
+        }
         break;
 
       case 'ArrowDown':
         e.preventDefault();
         if (timeView === '5hour') State.shiftBand('down');
-        break;
-
-      case 'ArrowLeft':
-        // If already at leftmost — shift sidebar focus
-        _focus = 'sidebar';
-        _syncSidebarFocus();
         break;
 
       case 't':
@@ -129,19 +223,23 @@ const Input = (() => {
     }
   };
 
-  // ── Sidebar focus helpers ──────────────────────────────────────────────
+  // ── Focus helpers ──────────────────────────────────────────────────────
 
-  const _syncSidebarFocus = () => {
-    const items = document.querySelectorAll('.person-item');
-    items.forEach((item, i) => {
-      if (_focus === 'sidebar' && i === _sidebarFocusIdx) {
-        item.focus();
-      }
-    });
-  };
+  const _toolbarButtons = () => Array.from(document.querySelectorAll('.toolbar-btn[data-action]'));
 
-  const _blurSidebar = () => {
-    document.querySelectorAll('.person-item').forEach(item => item.blur());
+  /** Apply the DOM focus (and its :focus styling) for the current zone */
+  const _syncFocus = () => {
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
+
+    if (_focus === 'sidebar') {
+      const items = document.querySelectorAll('.person-item');
+      if (items[_sidebarFocusIdx]) items[_sidebarFocusIdx].focus();
+    } else if (_focus === 'toolbar') {
+      const buttons = _toolbarButtons();
+      if (buttons[_toolbarFocusIdx]) buttons[_toolbarFocusIdx].focus();
+    }
   };
 
   // ── Mouse scroll ──────────────────────────────────────────────────────

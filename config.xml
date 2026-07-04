@@ -4,8 +4,8 @@
         id="http://github.com/QuekTianYi/household-dashboard"
         version="1.0.0">
 
-  <tizen:application id="household.dashboard"
-                     package="household"
+  <tizen:application id="HouseholdD.app"
+                     package="HouseholdD"
                      required_version="4.0"/>
 
   <content src="index.html"/>

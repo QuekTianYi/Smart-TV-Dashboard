@@ -90,6 +90,85 @@ The app installs and launches on the TV. It persists after reboot.
 
 ---
 
+## Troubleshooting TV Installation
+
+### `install failed[118, -4], reason: Operation not allowed : :Load archive info fail`
+
+This was the main issue hit when installing via CLI:
+
+```
+tizen.bat install -n "Debug\HouseholdDashboard.wgt" -s <tv-ip>:26101
+```
+
+**Root cause:** the `package` attribute in `config.xml`'s `<tizen:application>` tag must be **exactly 10 alphanumeric characters**, and the `id` attribute must be that exact same `package` value followed by a dot and a suffix (`<package>.<suffix>`). If `package` is the wrong length, or `id`'s prefix doesn't match `package` character-for-character, the on-device installer fails during manifest parsing — but instead of a clear "invalid package ID" message, it surfaces as this generic archive-read error.
+
+Known-good values (in `config.xml`):
+```xml
+<tizen:application id="HouseholdD.app"
+                   package="HouseholdD"
+                   required_version="4.0"/>
+```
+
+Things that do **not** fix this error (ruled out while debugging):
+- Rebooting the TV (commonly suggested for this error code elsewhere, didn't help here)
+- The `.wgt` being corrupt or unsigned (verified valid zip + signature files present)
+- API version mismatch (`required_version="4.0"` is well under the TV's actual platform version — check yours with `sdb capability`, look for `platform_version`)
+
+**After editing `config.xml`, you must rebuild** (right-click project → **Build Signed Package** in Tizen Studio) before reinstalling — editing the source `config.xml` alone does not update the already-built `Debug/HouseholdDashboard.wgt`.
+
+If you use Tizen Studio's Config Editor **form view** (not the raw XML), double check the `ID` and `Package` fields there directly — they can end up out of sync with each other, or reset to the project name, if edited independently across sessions. Prefer editing the raw XML source of `config.xml` for these two attributes.
+
+### `tizen.bat uninstall -p <name>` — "Package ID is not valid"
+
+`-p` takes the **package ID** (`HouseholdD`), not the app ID (`HouseholdD.app`) or project name. Uninstall isn't actually needed unless a previous install partially succeeded — check first with `tizen.bat uninstall -p <package-id> -s <tv-ip>:26101`; "The package is not exist" just means there's nothing to remove.
+
+### Checking the TV's actual Tizen platform version
+
+```
+cd C:\tizen-studio\tools
+sdb.exe connect <tv-ip>:26101
+sdb.exe -s <tv-ip>:26101 capability
+```
+
+### Installation
+```
+cd C:\tizen-studio\tools\ide\bin
+tizen.bat install -n "C:\<project>\Debug\HouseholdDashboard.wgt" -s <tv_ip>:26101
+
+```
+
+It should look something like this if it is sucessful:
+```
+Transferring the package...
+Transferred the package
+Installing the package...
+--------------------
+Platform log view
+--------------------
+install HouseholdD.app
+package_path /home/owner/share/tmp/sdk_tools/tmp/HouseholdDashboard.wgt
+app_id[HouseholdD.app] install start
+app_id[HouseholdD.app] installing[10]
+app_id[HouseholdD.app] installing[20]
+app_id[HouseholdD.app] installing[30]
+app_id[HouseholdD.app] installing[40]
+app_id[HouseholdD.app] installing[51]
+app_id[HouseholdD.app] installing[61]
+app_id[HouseholdD.app] installing[71]
+app_id[HouseholdD.app] installing[81]
+app_id[HouseholdD.app] installing[91]
+app_id[HouseholdD.app] installing[100]
+app_id[HouseholdD.app] install completed
+spend time for wascmd is [2529]ms
+Installed the package: Id(HouseholdD.app)
+Tizen application is successfully installed.
+Total time: 00:00:03.298
+```
+
+Look for `platform_version` in the output — useful for confirming `required_version` in `config.xml` is compatible before assuming an API-version mismatch is the cause of an install failure.
+
+---
+
 ## Browser / Local Testing
 
 Open `index.html` directly in Chrome or Firefox for development.
